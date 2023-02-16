@@ -1,0 +1,34 @@
+﻿<Project Sdk="h5.Target/23.2.35852">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>7.2</LangVersion> <!-- H5 compiler supports C# 7.2 -->
+    <NoWarn>1998</NoWarn>          <!-- Disable warning for async method without any await -->
+    <DebugType>None</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <DefineConstants>H5</DefineConstants>
+  </PropertyGroup>
+
+
+  <!-- Don't forget  to perform a NuGet packages update to fetch the latest versions! -->
+  <ItemGroup>
+    <PackageReference Include="h5" Version="23.1.35432" />
+    <PackageReference Include="h5.core" Version="23.1.35431" />
+    <PackageReference Include="h5.Newtonsoft.Json" Version="23.1.35433" />
+    <PackageReference Include="Plotly.H5" Version="0.0.8196" />
+    <PackageReference Include="Tesserae" Version="2023.2.36235" />
+    <PackageReference Include="Mosaik.FrontEnd.API" Version="23.2.36358" />
+    <PackageReference Include="Mosaik.FrontEnd.Core" Version="23.2.36358" />
+    <PackageReference Include="Mosaik.FrontEnd.Admin" Version="23.2.36358" />
+    <PackageReference Include="Mosaik.FrontEnd" Version="23.2.36358" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="assets\img\" />
+    <Folder Include="assets\js\" />
+  </ItemGroup>
+
+  <!-- When building in release mode, zips the output folder so it can be uploaded to the workspace via the UI -->
+  <Target Name="ZipOutput" AfterTargets="Build" Condition="'$(Configuration)'=='Release'">
+    <Exec Command="powershell.exe .\zip-output-folder.ps1 $(ProjectDir)bin\$(Configuration)\netstandard2.0\h5\" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
+  </Target>
+</Project>

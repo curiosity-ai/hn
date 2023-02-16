@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "HackernewsConnector": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "CURIOSITY_API_TOKEN": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJGb3IiOiJBUEkiLCJDcmVhdGVkQnkiOiJyYWZhZWxAY3VyaW9zaXR5LmFpIiwiUHVycG9zZSI6IkRhdGEgSW5nZXN0aW9uIiwibmJmIjoxNjc2NTY5MDEyLCJleHAiOjE5OTE5MjkwNzIsImlzcyI6IkN1cmlvc2l0eS5TZWN1cml0eS5CZWFyZXIiLCJhdWQiOiJDdXJpb3NpdHkifQ.2gswugpYdTTaujxkb-rmQz4lqwycQ4UHxr8kSVZSee8"
+      },
+      "hotReloadEnabled": false
+    }
+  }
+}
