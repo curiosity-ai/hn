@@ -18,7 +18,7 @@ namespace HackerNews
             public class Job
             {
                 [Key] public string Id { get; set; }
-                [Timestamp] public DateTime Timestamp { get; set; }
+                [Timestamp] public DateTimeOffset Timestamp { get; set; }
                 [Property] public string Title { get; set; }
                 [Property] public string Text { get; set; }
                 [Property] public string Url { get; set; }
@@ -29,7 +29,7 @@ namespace HackerNews
             public class Comment
             {
                 [Key] public string Id { get; set; }
-                [Timestamp] public DateTime Timestamp { get; set; }
+                [Timestamp] public DateTimeOffset Timestamp { get; set; }
                 [Property] public string Title { get; set; }
                 [Property] public string Text { get; set; }
                 [Property] public string Url { get; set; }
@@ -40,7 +40,7 @@ namespace HackerNews
             public class Story
             {
                 [Key] public string Id { get; set; }
-                [Timestamp] public DateTime Timestamp { get; set; }
+                [Timestamp] public DateTimeOffset Timestamp { get; set; }
                 [Property] public string Title { get; set; }
                 [Property] public string Text { get; set; }
                 [Property] public string Url { get; set; }
@@ -51,7 +51,7 @@ namespace HackerNews
             public class Pool
             {
                 [Key] public string Id { get; set; }
-                [Timestamp] public DateTime Timestamp { get; set; }
+                [Timestamp] public DateTimeOffset Timestamp { get; set; }
                 [Property] public string Title { get; set; }
                 [Property] public string Text { get; set; }
                 [Property] public string Url { get; set; }
@@ -62,7 +62,7 @@ namespace HackerNews
             public class PoolOption
             {
                 [Key] public string Id { get; set; }
-                [Timestamp] public DateTime Timestamp { get; set; }
+                [Timestamp] public DateTimeOffset Timestamp { get; set; }
                 [Property] public string Title { get; set; }
                 [Property] public string Text { get; set; }
                 [Property] public string Url { get; set; }
@@ -73,14 +73,14 @@ namespace HackerNews
             public class Status
             {
                 [Key] public string Name { get; set; }
-                [Timestamp] public DateTime Timestamp { get; set; }
+                [Timestamp] public DateTimeOffset Timestamp { get; set; }
             }
 
             [Node]
             public class Property
             {
                 [Key] public string Name { get; set; }
-                [Timestamp] public DateTime Timestamp { get; set; }
+                [Timestamp] public DateTimeOffset Timestamp { get; set; }
                 [Property] public int Value { get; set; }
             }
 
@@ -88,7 +88,7 @@ namespace HackerNews
             public class User
             {
                 [Key] public string Name { get; set; }
-                [Timestamp] public DateTime Timestamp { get; set; }
+                [Timestamp] public DateTimeOffset Timestamp { get; set; }
                 [Property] public int Karma { get; set; }
                 [Property] public string About { get; set; }
             }
@@ -97,7 +97,7 @@ namespace HackerNews
             public class SubmissionType
             {
                 [Key] public string Name { get; set; }
-                [Timestamp] public DateTime Timestamp { get; set; }
+                [Timestamp] public DateTimeOffset Timestamp { get; set; }
             }
         }
 

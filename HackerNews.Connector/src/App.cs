@@ -17,6 +17,7 @@ using System.Threading.Channels;
 using System.Runtime.CompilerServices;
 using static HackerNews.Schema;
 using static HackerNews.Schema.Nodes;
+using System.Collections.Concurrent;
 
 namespace HackerNews
 {
@@ -27,7 +28,7 @@ namespace HackerNews
 
         public static async Task<int> Main(string[] args)
         {
-            string token = Environment.GetEnvironmentVariable("CURIOSITY_API_TOKEN");
+            var token = Environment.GetEnvironmentVariable("CURIOSITY_API_TOKEN");
 
             if (string.IsNullOrEmpty(token))
             {
@@ -35,35 +36,26 @@ namespace HackerNews
                 return 0xDEAD;
             }
 
+            var pythonEnginePath = Environment.GetEnvironmentVariable("PYTHON_ENGINE_PATH");
+            var modelPath        = Environment.GetEnvironmentVariable("MODEL_PATH");
+            var embeddingsIndex  = Environment.GetEnvironmentVariable("EMBEDDINGS_INDEX");
 
-            //var loggerFactory = LoggerFactory.Create(log => ConfigureFilters(log));
+            var loggerFactory = LoggerFactory.Create(log => log.AddConsole());
+            var logger = loggerFactory.CreateLogger("HackerNews");
 
-            //_logger = loggerFactory.CreateLogger("Program");
+            bool isEmbeddingsEnabled = false;
 
-            //if (!File.Exists(options.PythonPath)) throw new Exception($"Python DLL not found at {options.PythonPath}");
+            if (File.Exists(pythonEnginePath) && File.Exists(modelPath) && !string.IsNullOrEmpty(embeddingsIndex))
+            {
+                Runtime.PythonDLL = pythonEnginePath;
+                PythonEngine.PythonPath = PythonEngine.PythonPath + ";" + Environment.GetEnvironmentVariable("PYTHONPATH", EnvironmentVariableTarget.Process);
+                PythonEngine.Initialize();
+                PythonEngine.BeginAllowThreads();
+                isEmbeddingsEnabled = InitializeModel(logger, modelPath);
 
-            //Runtime.PythonDLL = options.PythonPath;
-
-            //PythonEngine.PythonPath = PythonEngine.PythonPath + ";" + Environment.GetEnvironmentVariable("PYTHONPATH", EnvironmentVariableTarget.Process);
-
-            //PythonEngine.Initialize();
-
-            //PythonEngine.BeginAllowThreads();
-
-            //InitializeModel(options);
-
-            //PcaModel.Build(modelPath, precomputed);
-            //vector = GetVector(item.Title);
-
-            //if (PcaModel.IsAvailable)
-            //{
-            //    _logger.LogInformation("Applying PCA transform to {0} vectors", vectors.Count);
-            //    PcaModel.Apply(vectors);
-            //    _logger.LogInformation("{0} vectors transformed using PCA", vectors.Count);
-            //}
-
-            //await graph.AddEmbeddingsToIndexAsync(options.Index, vectors);
-
+                //TODO: Build a PCA model from pre-computed posts title vectors
+                //PcaModel.Build(modelPath, precomputed);
+            }
 
             using (var graph = Graph.Connect("https://hn.curiosity.ai/", token, "Hackernews Connector"))
             {
@@ -71,7 +63,7 @@ namespace HackerNews
                 {
                     await graph.LogAsync("Starting Hackernews connector");
                     
-                    await UploadDataAsync(graph);
+                    await UploadDataAsync(graph, isEmbeddingsEnabled, embeddingsIndex);
 
                     await graph.LogAsync("Finished Hackernews connector");
                 }
@@ -85,18 +77,193 @@ namespace HackerNews
             return 0;
         }
 
-        private static void PrintHelp()
+
+        private static async Task UploadDataAsync(Graph graph, bool isEmbeddingsEnabled, string embeddingsIndex)
         {
-            Console.WriteLine("Missing API token, you can set it using the CURIOSITY_API_TOKEN environment variable.");
+            int count = 0;
+            var pendingEmbeddings = new ConcurrentDictionary<Node, string>();
+            await foreach(var post in HackerNewsClient.FetchPostsAsync(1, limit: 100_000))
+            {
+                IngestPost(graph, post, pendingEmbeddings);
+                count++;
+
+                if (count % 1000 == 0)
+                {
+                    await graph.CommitPendingAsync(); //Commit transactions every 1000 posts
+
+                    var vectors = new List<NodeAndVector>();
+                    foreach(var (postNode, title) in pendingEmbeddings)
+                    {
+                        vectors.Add(NodeAndVector.Create(postNode, GetVector(title)));
+                    }
+
+                    //TODO enable PCA:
+
+                    //if (PcaModel.IsAvailable)
+                    //{
+                    //    _logger.LogInformation("Applying PCA transform to {0} vectors", vectors.Count);
+                    //    PcaModel.Apply(vectors);
+                    //    _logger.LogInformation("{0} vectors transformed using PCA", vectors.Count);
+                    //}
+
+                    await graph.AddEmbeddingsToIndexAsync(embeddingsIndex, vectors);
+                }
+            }
         }
 
-        private static async Task UploadDataAsync(Graph graph)
+        private static Node IngestPost(Graph graph, Post post, ConcurrentDictionary<Node, string> pendingEmbeddings, bool fetchKids = true)
         {
-            // Implement your data logic here.
+            Node postNode;
+
+            switch (post.Type)
+            {
+                case PostType.job:       
+                {
+                    postNode = graph.TryAdd(new Job()
+                    {
+                        Id = post.Id.ToString(),
+                        Text = post.Text,
+                        Score = post.Score,
+                        Title = post.Title,
+                        Url = post.Url,
+                        Timestamp = DateTimeOffset.FromUnixTimeSeconds(post.Time)
+                    });
+                    break; 
+                }
+                case PostType.story:     
+                {
+                    postNode = graph.TryAdd(new Story()
+                    {
+                        Id = post.Id.ToString(),
+                        Text = post.Text,
+                        Score = post.Score,
+                        Title = post.Title,
+                        Url = post.Url,
+                        Timestamp = DateTimeOffset.FromUnixTimeSeconds(post.Time)
+                    }); break; 
+                }
+                case PostType.comment:   
+                {
+                    postNode = graph.TryAdd(new Comment()
+                    {
+                        Id = post.Id.ToString(),
+                        Text = post.Text,
+                        Score = post.Score,
+                        Title = post.Title,
+                        Url = post.Url,
+                        Timestamp = DateTimeOffset.FromUnixTimeSeconds(post.Time)
+                    });
+                    break; 
+                }
+                case PostType.pool:      
+                {
+                    postNode = graph.TryAdd(new Pool()
+                    {
+                        Id = post.Id.ToString(),
+                        Text = post.Text,
+                        Score = post.Score,
+                        Title = post.Title,
+                        Url = post.Url,
+                        Timestamp = DateTimeOffset.FromUnixTimeSeconds(post.Time)
+                    });
+                    break; 
+                }
+                case PostType.poolopt:   
+                {
+                    postNode = graph.TryAdd(new PoolOption()
+                    {
+                        Id = post.Id.ToString(),
+                        Text = post.Text,
+                        Score = post.Score,
+                        Title = post.Title,
+                        Url = post.Url,
+                        Timestamp = DateTimeOffset.FromUnixTimeSeconds(post.Time)
+                    });
+                    break; 
+                }
+                default: throw new NotSupportedException($"Unknown post type: {post.Type}");
+            }
+
+            if (post.HasTitle && post.Title.Length > 5)
+            {
+                pendingEmbeddings[postNode] = post.Title;
+            }
+
+
+            string postType = null, status = null;
+
+            if (!string.IsNullOrEmpty(post.Title))
+            {
+                if (post.Title.StartsWith("Show HN:"))
+                {
+                    postType = "Show";
+                }
+                else if (post.Title.StartsWith("Ask HN:"))
+                {
+                    if (post.IsHiring)
+                    {
+                        postType = "Hiring";
+                    }
+                    else
+                    {
+                        postType = "Ask";
+                    }
+                }
+            }
+
+            if (post.Deleted)
+            {
+                status = "Deleted";
+            }
+            else if (post.Dead)
+            {
+                status = "Dead";
+            }
+            else if (post.IsPlaceholder)
+            {
+                status = "Placeholder";
+            }
+
+            if (!string.IsNullOrEmpty(post.By))
+            {
+                var authorNode = graph.TryAdd(new User() { Name = post.By });
+                graph.Link(postNode, authorNode, Edges.HasAuthor, Edges.AuthorOf);
+            }
+
+            if (!string.IsNullOrEmpty(postType))
+            {
+                var authorNode = graph.TryAdd(new SubmissionType() { Name = postType });
+                graph.Link(postNode, authorNode, Edges.HasCategory, Edges.CategoryOf);
+            }
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                var statusNode = graph.TryAdd(new Status() { Name = status });
+                graph.Link(postNode, statusNode, Edges.HasStatus, Edges.StatusOf);
+            }
+
+
+            if (post.HasKids && fetchKids)
+            {
+                foreach (var kid in post.Children)
+                {
+                    var kidNode = IngestPost(graph, kid, pendingEmbeddings);
+
+                    if (kid.Type == PostType.comment)
+                    {
+                        graph.Link(postNode, kidNode, Edges.HasComment, Edges.CommentOf);
+                    }
+                    else
+                    {
+                        graph.Link(postNode, kidNode, Edges.HasPoolOption, Edges.PoolOptionOf);
+                    }
+                }
+            }
+
+            return postNode;
         }
 
-
-        private static void InitializeModel(ILogger logger, string modelPath)
+        private static bool InitializeModel(ILogger logger, string modelPath)
         {
             using (Py.GIL())
             {
@@ -104,6 +271,7 @@ namespace HackerNews
                 _hub = Py.Import("tensorflow_hub");
                 logger.LogInformation("Loading model");
                 logger = _hub.load(modelPath);
+                return true;
             }
         }
 
@@ -111,10 +279,12 @@ namespace HackerNews
         {
             using (Py.GIL())
             {
-                var input = new List<string>() { text };
+                var input = new List<string>(1) { text };
                 var vector = _embed(input).numpy().flatten().tolist();
                 return vector.As<float[]>();
             }
         }
+
+        private static void PrintHelp() => Console.WriteLine("Missing API token, you can set it using the CURIOSITY_API_TOKEN environment variable.");
     }
 }
