@@ -57,7 +57,7 @@ namespace HackerNews
                 //PcaModel.Build(modelPath, precomputed);
             }
 
-            using (var graph = Graph.Connect("https://hn.curiosity.ai/", token, "Hackernews Connector"))
+            using (var graph = Graph.Connect("https://hn.curiosity.ai/", token, "Hackernews Connector").WithLoggingFactory(loggerFactory))
             {
                 try
                 {
