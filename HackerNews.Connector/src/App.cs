@@ -64,6 +64,8 @@ namespace HackerNews
                 {
                     await graph.LogAsync("Starting Hackernews connector");
 
+                    await CreateSchemaAsync(graph);
+
                     await UploadDataAsync(graph, isEmbeddingsEnabled, embeddingsIndex, logger);
 
                     await graph.LogAsync("Finished Hackernews connector");
@@ -78,6 +80,25 @@ namespace HackerNews
             return 0;
         }
 
+        private static async Task CreateSchemaAsync(Graph graph)
+        {
+            await graph.CreateNodeSchemaAsync<Job>();
+            await graph.CreateNodeSchemaAsync<Comment>();
+            await graph.CreateNodeSchemaAsync<Story>();
+            await graph.CreateNodeSchemaAsync<Pool>();
+            await graph.CreateNodeSchemaAsync<PoolOption>();
+            await graph.CreateNodeSchemaAsync<Status>();
+            await graph.CreateNodeSchemaAsync<Property>();
+            await graph.CreateNodeSchemaAsync<User>();
+            await graph.CreateNodeSchemaAsync<SubmissionType>();
+
+            await graph.CreateEdgeSchemaAsync(Edges.HasCategory,      Edges.CategoryOf,
+                                        Edges.HasPoolOption,    Edges.PoolOptionOf,
+                                        Edges.StatusOf,         Edges.HasStatus,
+                                        Edges.HasAuthor,        Edges.AuthorOf,
+                                        Edges.HasComment,       Edges.CommentOf,
+                                        Edges.HasFavorite,      Edges.FavoriteOf);
+        }
 
         private static async Task UploadDataAsync(Graph graph, bool isEmbeddingsEnabled, string embeddingsIndex, ILogger logger)
         {
