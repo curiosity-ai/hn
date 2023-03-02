@@ -130,7 +130,10 @@ namespace HackerNews
                     //    _logger.LogInformation("{0} vectors transformed using PCA", vectors.Count);
                     //}
 
-                    await graph.AddEmbeddingsToIndexAsync(embeddingsIndex, vectors);
+                    if (isEmbeddingsEnabled)
+                    {
+                        await graph.AddEmbeddingsToIndexAsync(embeddingsIndex, vectors);
+                    }
                 }
             }
         }
