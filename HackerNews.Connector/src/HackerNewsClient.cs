@@ -41,9 +41,11 @@ namespace HackerNews
             {
                 if (Interlocked.Read(ref count) > limit) break; //Stop after we fetched enough posts
 
+                int idLocal = id; //Make a copy of the loop variable so it's captured in the task below
+                
                 tasks.Add(Task.Run(async () =>
                 {
-                    var post = await GetByIdAsync(id, cancellationToken);
+                    var post = await GetByIdAsync(idLocal, cancellationToken);
 
                     //Only enqueue parent posts, comments and pool options should be only fetched as children of other posts
                     if(post.Type != PostType.comment && post.Type != PostType.poolopt)
@@ -85,7 +87,7 @@ namespace HackerNews
                     throw new Exception($"Failed to parse: {json}");
                 }
 
-                if (string.IsNullOrWhiteSpace(post.Url) && post.Url.StartsWith("https://news.ycombinator.com/item?id="))
+                if (!string.IsNullOrWhiteSpace(post.Url) && post.Url.StartsWith("https://news.ycombinator.com/item?id="))
                 {
                     post.Url = ""; //remove any HackerNews urls like: "https://news.ycombinator.com/item?id={article.Id}";
                 }

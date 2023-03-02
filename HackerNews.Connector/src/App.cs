@@ -29,6 +29,7 @@ namespace HackerNews
         public static async Task<int> Main(string[] args)
         {
             var token = Environment.GetEnvironmentVariable("CURIOSITY_API_TOKEN");
+            var url   = Environment.GetEnvironmentVariable("CURIOSITY_URL");
 
             if (string.IsNullOrEmpty(token))
             {
@@ -57,13 +58,13 @@ namespace HackerNews
                 //PcaModel.Build(modelPath, precomputed);
             }
 
-            using (var graph = Graph.Connect("https://hn.curiosity.ai/", token, "Hackernews Connector").WithLoggingFactory(loggerFactory))
+            using (var graph = Graph.Connect(url, token, "Hackernews Connector").WithLoggingFactory(loggerFactory))
             {
                 try
                 {
                     await graph.LogAsync("Starting Hackernews connector");
-                    
-                    await UploadDataAsync(graph, isEmbeddingsEnabled, embeddingsIndex);
+
+                    await UploadDataAsync(graph, isEmbeddingsEnabled, embeddingsIndex, logger);
 
                     await graph.LogAsync("Finished Hackernews connector");
                 }
@@ -78,14 +79,16 @@ namespace HackerNews
         }
 
 
-        private static async Task UploadDataAsync(Graph graph, bool isEmbeddingsEnabled, string embeddingsIndex)
+        private static async Task UploadDataAsync(Graph graph, bool isEmbeddingsEnabled, string embeddingsIndex, ILogger logger)
         {
             int count = 0;
             var pendingEmbeddings = new ConcurrentDictionary<Node, string>();
+
             await foreach(var post in HackerNewsClient.FetchPostsAsync(1, limit: 100_000))
             {
                 IngestPost(graph, post, pendingEmbeddings);
                 count++;
+                logger.LogInformation("Found {0} with id {1}: '{2}'", post.Type, post.Id, post.Title);
 
                 if (count % 1000 == 0)
                 {
