@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HackerNews.FrontEnd", "Hack
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HackerNews.Connector", "HackerNews.Connector\HackerNews.Connector.csproj", "{61886D25-BB73-496D-8A00-7EA501FF62D0}"
 EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "HackerNews.Connector.Python", "HackerNews.Connector.Python\HackerNews.Connector.Python.pyproj", "{ABD24EE4-D39B-40A8-8389-2C2F10064870}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,8 @@ Global
 		{61886D25-BB73-496D-8A00-7EA501FF62D0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{61886D25-BB73-496D-8A00-7EA501FF62D0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{61886D25-BB73-496D-8A00-7EA501FF62D0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ABD24EE4-D39B-40A8-8389-2C2F10064870}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ABD24EE4-D39B-40A8-8389-2C2F10064870}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

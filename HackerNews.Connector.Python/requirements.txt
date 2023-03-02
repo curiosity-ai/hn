@@ -1,0 +1,2 @@
+curiosity==36441
+hackernews-python==0.3.2
