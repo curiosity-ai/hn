@@ -15,7 +15,7 @@ namespace HackerNews
     public class UserRenderer : INodeRenderer
     {
         public string NodeType    => N.User.Type;
-        public string DisplayName => "User";
+        public string DisplayName => "Author";
         public string LabelField  => "Name";
         public string Color       => "#106ebe";
         public string Icon        => "user";

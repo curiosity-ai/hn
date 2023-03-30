@@ -17,10 +17,10 @@
     <PackageReference Include="h5.Newtonsoft.Json" Version="23.1.35433" />
     <PackageReference Include="Plotly.H5" Version="0.0.8196" />
     <PackageReference Include="Tesserae" Version="2023.3.36919" />
-    <PackageReference Include="Mosaik.FrontEnd.API" Version="23.3.36932" />
-    <PackageReference Include="Mosaik.FrontEnd.Core" Version="23.3.36932" />
-    <PackageReference Include="Mosaik.FrontEnd.Admin" Version="23.3.36932" />
-    <PackageReference Include="Mosaik.FrontEnd" Version="23.3.36932" />
+    <PackageReference Include="Mosaik.FrontEnd.API" Version="23.3.37040" />
+    <PackageReference Include="Mosaik.FrontEnd.Core" Version="23.3.37040" />
+    <PackageReference Include="Mosaik.FrontEnd.Admin" Version="23.3.37040" />
+    <PackageReference Include="Mosaik.FrontEnd" Version="23.3.37040" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="assets\img\" />
@@ -29,6 +29,6 @@
 
   <!-- When building in release mode, zips the output folder so it can be uploaded to the workspace via the UI -->
   <Target Name="ZipOutput" AfterTargets="Build" Condition="'$(Configuration)'=='Release'">
-    <Exec Command="powershell.exe .\zip-output-folder.ps1 $(ProjectDir)bin\$(Configuration)\netstandard2.0\h5\" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
+    <Exec Command="powershell.exe -executionpolicy bypass .\zip-output-folder.ps1 $(ProjectDir)bin\$(Configuration)\netstandard2.0\h5\" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
   </Target>
 </Project>

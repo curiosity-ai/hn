@@ -15,7 +15,7 @@ namespace HackerNews
     public class SubmissionTypeRenderer : INodeRenderer
     {
         public string NodeType    => N.SubmissionType.Type;
-        public string DisplayName => "SubmissionType";
+        public string DisplayName => "Type";
         public string LabelField  => "Name";
         public string Color       => "#106ebe";
         public string Icon        => "circle";

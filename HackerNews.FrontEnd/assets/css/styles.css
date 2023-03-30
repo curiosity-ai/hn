@@ -1,3 +1,21 @@
 ﻿.no-default-margin .tss-stack-item.tss-default-component-margin {
     margin: 0px;
 }
+
+#sidebar-home {
+    display: none !important;
+}
+
+.story-status-line {
+    transform:translate(-8px, -8px);
+}
+
+.trends-word-group {
+    background: var(--tss-secondary-background-color);
+    border-radius: 4px;
+    padding: 4px;
+}
+
+.trends-word-box {
+    border-radius: 4px;
+}

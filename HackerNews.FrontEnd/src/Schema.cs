@@ -75,6 +75,7 @@ namespace HackerNews
             public const string Type = nameof(Property);
             public const string Name = nameof(Name);
             public const string Value = nameof(Value);
+            public const string ValueString = nameof(ValueString);
         }
         public sealed class User
         {
@@ -87,6 +88,22 @@ namespace HackerNews
         {
             public const string Type = nameof(SubmissionType);
             public const string Name = nameof(Name);
+        }
+
+        public sealed class TopStories
+        {
+            public const string Type = nameof(TopStories);
+            public const string When = nameof(When);
+        }
+        public sealed class NewStories
+        {
+            public const string Type = nameof(NewStories);
+            public const string When = nameof(When);
+        }
+        public sealed class BestStories
+        {
+            public const string Type = nameof(BestStories);
+            public const string When = nameof(When);
         }
     }
 

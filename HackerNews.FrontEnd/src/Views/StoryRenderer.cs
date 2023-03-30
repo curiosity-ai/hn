@@ -14,6 +14,8 @@ using System.Threading;
 using Mosaik.Helpers;
 using static H5.Core.es5;
 using Mosaik.FrontEnd.Desktop;
+using static PlotlyH5.Literals;
+using static Retyped.zip_js.zip;
 
 namespace HackerNews
 {
@@ -27,13 +29,49 @@ namespace HackerNews
 
         public CardContent CompactView(Node node)
         {
-            var card = CardContent(Header(this, node), TextBlock(node.GetString(N.Story.Text), selectable: true, treatAsHTML: true, textSize: TextSize.Tiny).WS().PL(56).BreakSpaces());
+            var url    = node.GetString(N.Story.Url);
+            var domain = string.IsNullOrEmpty(url) ? "" : H5.Script.Write<string>("new URL({0}).hostname", url);
+
+            var seeDiscussion = Button().PR(8).Collapse().LessPadding().Tiny().NoMinSize()
+                                        .OnClick(() => NodePreview.For(node.UID));
             
-            var url = node.GetString(N.Story.Url);
+            var openDiscussionOnHN = Button("Open on HN").SetIcon(LineAwesome.ExternalLinkAlt, size: TextSize.Tiny, afterText: true).LessPadding().Tiny().NoMinSize()
+                                                         .OnClick(() => ElectronBridge.OpenNewWindow($"https://news.ycombinator.com/item?id={node.GetString(N.Story.Id)}", true));
+
+            var secondLine = HStack().AlignItemsCenter().Class("no-default-margin").Class("story-status-line").Children(
+                                    If(node.GetInt(N.Story.Score) > 1, Button($"{node.GetInt(N.Story.Score):n0} points").PR(8).LessPadding().Tiny().NoMinSize().NoBorder().NoHover()),
+                                    If(!string.IsNullOrEmpty(domain), Button($"({domain})").PR(8).LessPadding().Tiny().NoMinSize().NoBorder().NoHover()),
+                                    seeDiscussion,
+                                    openDiscussionOnHN);
+
+            Mosaik.API.Aggregated.GetNeighborCount(node.UID, N.Comment.Type, E.HasComment, (c) =>
+            {
+                if (c > 0)
+                {
+                    seeDiscussion.SetText("See discussion").SetIcon(LineAwesome.Comments, size: TextSize.Tiny, afterText: true).Show();
+                }
+            });
+
+            var header = Header(this, node);
+
+            var card = CardContent(header, secondLine.WS().PL(56));
             
             if (!string.IsNullOrEmpty(url))
             {
-                card.WithExtraCommands(new[] { new CommandDefinition("Open Link", "o+l", LineAwesome.ExternalLinkAlt, () => ElectronBridge.OpenNewWindow(url, true)) });
+                Action openExternal = () =>
+                {
+                    ElectronBridge.OpenNewWindow(url, true);
+                    LocalStorage.SetBool($"read-{node.UID}", true);
+                    SearchRenderer.MaybeRedraw(node.UID);
+                };
+
+                card.WithExtraCommands(new[] 
+                {
+                    new CommandDefinition("Open Link", "l", LineAwesome.ExternalLinkAlt, openExternal) ,
+                    new CommandDefinition("See Discussion", "d", LineAwesome.Comments, () =>  NodePreview.For(node))
+                });
+
+                header.OnClick = openExternal;
             }
 
             return card;
@@ -45,23 +83,19 @@ namespace HackerNews
 
         public string GetIcon(Node node)
         {
-            var url = node.GetString(N.Story.Url);
+            if (LocalStorage.GetBool($"read-{node.UID}"))
+            {
+                return "envelope-open";
+            }
 
-            if(!string.IsNullOrEmpty(url))
-            {
-                return "link";
-            }
-            else
-            {
-                return "notes";
-            }
+            return "envelope";
         }
 
         public string GetLabel(Node node) => node.GetString("Title");
 
         public async Task<CardContent> PreviewAsync(Node node, Parameters state)
         {
-            return CardContent(Header(this, node), CreateView(node, state));
+            return CardContent(Header(this, node), CreateView(node, state)).PreviewWidth(80.vw()).PreviewHeight(80.vh());
         }
 
         public async Task<IComponent> ViewAsync(Node node, Parameters state)
@@ -71,6 +105,9 @@ namespace HackerNews
 
         private IComponent CreateView(Node node, Parameters state)
         {
+            LocalStorage.SetBool($"read-{node.UID}", true);
+            SearchRenderer.MaybeRedraw(node.UID);
+
             var author = Button().Foreground(Theme.Secondary.Foreground).NoPadding().NoMinSize();
             var text   = node.GetString(N.Story.Text);
             var url    = node.GetString(N.Story.Url);

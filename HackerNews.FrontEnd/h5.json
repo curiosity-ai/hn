@@ -23,7 +23,7 @@
       "output": "assets/css/"
     }
   ],
-  "cleanOutputFolderBeforeBuildPattern": "*.js|*.css",
+  "cleanOutputFolderBeforeBuildPattern": "*.js|*.css|*.zip",
   "console": {
     "enabled": false
   },
