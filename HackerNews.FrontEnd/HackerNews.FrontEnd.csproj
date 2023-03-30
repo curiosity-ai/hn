@@ -16,11 +16,11 @@
     <PackageReference Include="h5.core" Version="23.1.35431" />
     <PackageReference Include="h5.Newtonsoft.Json" Version="23.1.35433" />
     <PackageReference Include="Plotly.H5" Version="0.0.8196" />
-    <PackageReference Include="Tesserae" Version="2023.2.36235" />
-    <PackageReference Include="Mosaik.FrontEnd.API" Version="23.2.36358" />
-    <PackageReference Include="Mosaik.FrontEnd.Core" Version="23.2.36358" />
-    <PackageReference Include="Mosaik.FrontEnd.Admin" Version="23.2.36358" />
-    <PackageReference Include="Mosaik.FrontEnd" Version="23.2.36358" />
+    <PackageReference Include="Tesserae" Version="2023.3.36919" />
+    <PackageReference Include="Mosaik.FrontEnd.API" Version="23.3.36932" />
+    <PackageReference Include="Mosaik.FrontEnd.Core" Version="23.3.36932" />
+    <PackageReference Include="Mosaik.FrontEnd.Admin" Version="23.3.36932" />
+    <PackageReference Include="Mosaik.FrontEnd" Version="23.3.36932" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="assets\img\" />
