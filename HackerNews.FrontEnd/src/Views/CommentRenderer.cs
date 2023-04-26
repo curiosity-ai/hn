@@ -16,13 +16,13 @@ namespace HackerNews
     {
         public string NodeType    => N.Comment.Type;
         public string DisplayName => "Comment";
-        public string LabelField  => "Id";
+        public string LabelField  => "Text";
         public string Color       => "#106ebe";
         public string Icon        => "comment";
 
         public CardContent CompactView(Node node)
         {
-            return CardContent(Header(this, node), null);
+            return CardContent(Header(this, node, customTitle: TextBlock(node.GetString("Text"), treatAsHTML: true)), null);
         }
 
         public async Task<CardContent> PreviewAsync(Node node, Parameters state)

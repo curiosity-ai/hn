@@ -1,3 +1,5 @@
+using static PlotlyH5.Literals.Axis;
+
 namespace HackerNews
 {
     // This class is an auto-generated helper for all existing node & edge schema on your graph.
@@ -84,6 +86,11 @@ namespace HackerNews
             public const string Karma = nameof(Karma);
             public const string About = nameof(About);
         }
+        public sealed class Domain
+        {
+            public const string Type = nameof(Domain);
+            public const string Host = nameof(Host);
+        }
         public sealed class SubmissionType
         {
             public const string Type = nameof(SubmissionType);
@@ -122,6 +129,8 @@ namespace HackerNews
         public const string CommentOf = nameof(CommentOf);
         public const string HasFavorite = nameof(HasFavorite);
         public const string FavoriteOf = nameof(FavoriteOf);
+        public const string HasDomain = nameof(HasDomain);
+        public const string DomainOf = nameof(DomainOf);
     }
 
 }

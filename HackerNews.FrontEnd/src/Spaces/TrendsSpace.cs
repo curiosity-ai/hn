@@ -34,12 +34,22 @@ namespace HackerNews
                 { 3, new[] { "Apple" } }
             };
 
+            if(state.TryGetValue("terms", out var terms))
+            {
+                obsDict.Clear();
+                var parts = terms.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                for (int i = 0; i < parts.Length; i++)
+                {
+                    obsDict[i + 1] = parts[i].Split(new[] { '+'}, StringSplitOptions.RemoveEmptyEntries);
+                }
+            }
+
             var obsStrict   = new SettableObservable<bool>(true);
             var obsComments = new SettableObservable<bool>(false);
 
-            return VStack().S().PL(14).PR(14).PB(24).Children(
+            return VStack().S().PL(14).PR(14).PB(24).ScrollY().Children(
                 RenderWordsSelector(obsDict, obsStrict, obsComments).WS(),
-                Defer(obsDict, obsStrict, obsComments, async (d,s,c) => (await RenderTrends(d,s,c)).S()).WS().H(10).Grow());
+                Defer(obsDict, obsStrict, obsComments, async (d,s,c) => (await RenderTrends(d,s,c)).S()).WS().H(10).Grow().MinHeight(80.vh()).NoShrink());
         }
         private IComponent RenderWordsSelector(ObservableDictionary<int, string[]> obsDict, SettableObservable<bool> obsStrict, SettableObservable<bool> obsComments)
         {
@@ -86,10 +96,12 @@ namespace HackerNews
                     }
                 };
 
-                foreach(var word in group.Value)
+                groupStack.Add(Icon("fa fa-square", size: TextSize.Medium, color: GetColor(group.Key)).PL(8).PR(6));
+
+                foreach (var word in group.Value)
                 {
                     var tb = TextBox(word).UnlockHeight().H(32).Class("trends-word-box");
-                    var btnRemove = Button().PL(4).PR(8).SetIcon(LineAwesome.Times, color: Theme.Danger.Background).LessPadding().Tooltip("Remove word")
+                    var btnRemove = Button().PL(4).PR(8).SetIcon(UIcons.Cross, color: Theme.Danger.Background).LessPadding().Tooltip("Remove word")
                                             .OnClick(() => { wordBoxes.Remove(tb); refreshGroup(); })
                                             .Class("trends-word-button");
                     wordBoxes.Add(tb);
@@ -98,7 +110,7 @@ namespace HackerNews
                     groupStack.Add(btnRemove);
                 }
 
-                var btnAdd = Button().PL(4).PR(8).SetIcon(LineAwesome.Plus, color: Theme.Primary.Background).LessPadding().Tooltip("Add a word")
+                var btnAdd = Button().PL(4).PR(8).SetIcon(UIcons.Plus, color: Theme.Primary.Background).LessPadding().Tooltip("Add a word")
                                         .OnClick(() => { obsDict[groupId] = obsDict[groupId].Append("").ToArray();  })
                                         .Class("trends-word-button");
 
@@ -107,7 +119,7 @@ namespace HackerNews
                 stack.Add(groupStack.WS());
             }
 
-            var btnAddGroup = Button().SetIcon(LineAwesome.Plus).Primary().LessPadding().PT(8).OnClick(() => obsDict.Add(obsDict.Keys.Max() + 1, new[] { "" })).Class("trends-word-button");
+            var btnAddGroup = Button().SetIcon(UIcons.Plus).Primary().LessPadding().PT(8).OnClick(() => obsDict.Add(obsDict.Count > 0 ? (obsDict.Keys.Max() + 1) : 1, new[] { "" })).Class("trends-word-button");
 
             stack.Add(btnAddGroup);
 
@@ -118,50 +130,95 @@ namespace HackerNews
         {
             await ExternalLibraries.LoadPlotlyAsync();
 
+            Router.Replace(Routes.TrendsFor(wordGroups.OrderBy(kv => kv.Key).Select(kv => kv.Value).ToArray()));
+
             var stack = VStack().S().JustifyContent(ItemJustify.Center).AlignItemsCenter().Class("trends-plot-area").P(16);
 
-            stack.Children(Button("Refresh").Primary().Class("trends-refresh-button").H(48).Medium().SetIcon(LineAwesome.Sync).OnClickSpinWhile(async () =>
-                                              {
-                                                  var pm = ProgressModal().ProgressIndeterminated().Title("Calculating trends, please wait...");
+            var pm = ProgressModal().ProgressIndeterminated().Title("Calculating trends, please wait...");
 
-                                                  stack.Children(pm.ShowEmbedded());
+            stack.Children(pm.ShowEmbedded());
 
-                                                  var response = await Mosaik.API.Endpoints.CallAsync<TrendsResponse>("trends", new TrendsRequest()
-                                                  {
-                                                      Words = wordGroups,
-                                                      Strict = strict,
-                                                      IncludeComments = comments
-                                                  }, statusUpdatusReceived: s => pm.Message(s));
+            stack.WhenMounted(() =>
+            {
+                Task.Run(async () =>
+                {
 
-                                                  pm.Hide();
+                    var response = await Mosaik.API.Endpoints.CallAsync<TrendsResponse>("trends", new TrendsRequest()
+                    {
+                        Words = wordGroups,
+                        Strict = strict,
+                        IncludeComments = comments
+                    }, statusUpdatusReceived: s => pm.Message(s));
 
-                                                  var ordered = response.Counts.ToDictionary(kv => kv.Key, kv => kv.Value.OrderBy(kv2 => kv2.Key).ToArray());
-                                                  var categories = ordered.Values.SelectMany(kv => kv.Select(v => v.Key))
-                                                                                 .Distinct()
-                                                                                 .OrderBy(v => v)
-                                                                                 .ToArray();
-                                                  var size = stack.Render().getBoundingClientRect().As<DOMRect>();
+                    pm.Hide();
 
-                                                  stack.Children(Plotly(Plot.traces(ordered.Select(kv => Traces.scatter(Scatter.x(kv.Value.Select(kv2 => kv2.Key)),
-                                                                                                                Scatter.y(kv.Value.Select(kv2 => kv2.Value)),
-                                                                                                                Scatter.mode(Scatter.Mode.lines()),
-                                                                                                                Scatter.name(string.Join(", ", wordGroups[kv.Key])))).ToArray()),
-                                                                        Plot.layout(Layout.autosize(true),
-                                                                            Layout.height((int)size.height),
-                                                                            Layout.width((int)size.width),
-                                                                            Layout.margin(Margin.l(0), Margin.t(0), Margin.r(0), Margin.b(32)),
-                                                                            Layout.yaxis(Yaxis.automargin(true)),
-                                                                            Layout.showlegend(true),
-                                                                            Layout.xaxis(
-                                                                                Xaxis._type.category(),
-                                                                                Xaxis.categoryarray(categories),
-                                                                                Xaxis.Autorange._true()),
-                                                                            PlotlyConfig.Background(),
-                                                                            PlotlyConfig.PaperBackground(),
-                                                                            PlotlyConfig.Font()),
-                                                                        PlotlyConfig.Default2D()));
-                                              }));
+                    var ordered = response.Counts.ToDictionary(kv => kv.Key, kv => kv.Value.OrderBy(kv2 => kv2.Key).ToArray());
+
+                    var categories = ordered.Values.SelectMany(kv => kv.Select(v => v.Key))
+                                                    .Distinct()
+                                                    .OrderBy(v => v)
+                                                    .ToArray();
+
+                    var size = stack.Render().getBoundingClientRect().As<DOMRect>();
+
+                    stack.Children(Plotly(Plot.traces(ordered.Select((kv) => Traces.scatter(Scatter.x(kv.Value.Select(kv2 => kv2.Key)),
+                                                                                Scatter.y(FilterIfNeeded(kv.Value.Select(kv2 => (float)kv2.Value).ToArray())),
+                                                                                Scatter.mode(Scatter.Mode.lines()),
+                                                                                //Scatter.fillcolor(GetColor(kv.Key)),
+                                                                                Scatter.marker(Marker.color(GetColor(kv.Key))),
+                                                                                Scatter.line(Line.color(GetColor(kv.Key)), Line.Shape.spline(), Line.smoothing(2f)),
+
+                                                                                //Scatter.Fill.tozeroy(),
+                                                                                //kv.Key == 1 ? Scatter.Fill.tozeroy() : Scatter.Fill.tonexty(),
+                                                                                Scatter.name(string.Join(", ", wordGroups[kv.Key])))).ToArray()),
+                                        Plot.layout(Layout.autosize(true),
+                                            Layout.height((int)size.height),
+                                            Layout.width((int)size.width),
+                                            Layout.margin(Margin.l(0), Margin.t(0), Margin.r(0), Margin.b(64)),
+                                            Layout.yaxis(Yaxis.automargin(true), Yaxis.Ticks.none()),
+                                            Layout.showlegend(true),
+                                            Layout.xaxis(
+                                                Xaxis._type.category(),
+                                                Xaxis.categoryarray(categories),
+                                                Xaxis.showgrid(false),
+                                                Xaxis.automargin(true),
+                                                Xaxis.Autorange._true()),
+                                            PlotlyConfig.Background(),
+                                            PlotlyConfig.PaperBackground(),
+                                            PlotlyConfig.Font()),
+                                        PlotlyConfig.Default2D()));
+                });
+            });
+
             return stack;
+        }
+
+        private string GetColor(int i)
+        {
+            var colors = new[] { "#332288", "#88CCEE", "#44AA99", "#117733", "#999933", "#DDCC77", "#CC6677", "#882255", "#AA4499" };
+            return colors[i % colors.Length];
+        }
+
+        private float[] FilterIfNeeded(float[] inputData)
+        {
+            if (inputData.Length < 10) return inputData;
+
+            int n = 5;
+            var movingAverages = new float[inputData.Length];
+            var runningTotal = 0f;
+
+            for (int i = 0; i < inputData.Length; ++i)
+            {
+                runningTotal += inputData[i];
+                if (i - n >= 0)
+                {
+                    var lost = inputData[i - n];
+                    runningTotal -= lost;
+                    movingAverages[i] = runningTotal / n;
+                }
+            }
+
+            return movingAverages;
         }
 
         public dom.HTMLElement Render() => _content.Render();

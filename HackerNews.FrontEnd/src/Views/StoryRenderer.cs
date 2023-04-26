@@ -16,6 +16,7 @@ using static H5.Core.es5;
 using Mosaik.FrontEnd.Desktop;
 using static PlotlyH5.Literals;
 using static Retyped.zip_js.zip;
+using Mosaik.Components.Nodes;
 
 namespace HackerNews
 {
@@ -30,25 +31,28 @@ namespace HackerNews
         public CardContent CompactView(Node node)
         {
             var url    = node.GetString(N.Story.Url);
-            var domain = string.IsNullOrEmpty(url) ? "" : H5.Script.Write<string>("new URL({0}).hostname", url);
 
             var seeDiscussion = Button().PR(8).Collapse().LessPadding().Tiny().NoMinSize()
-                                        .OnClick(() => NodePreview.For(node.UID));
-            
-            var openDiscussionOnHN = Button("Open on HN").SetIcon(LineAwesome.ExternalLinkAlt, size: TextSize.Tiny, afterText: true).LessPadding().Tiny().NoMinSize()
-                                                         .OnClick(() => ElectronBridge.OpenNewWindow($"https://news.ycombinator.com/item?id={node.GetString(N.Story.Id)}", true));
+                                        .OnClick((b, e) => { StopEvent(e); NodePreview.For(node.UID); });
+
+            var openDiscussionOnHN = Button("Open on HN").SetIcon(UIcons.ArrowUpRightFromSquare, size: TextSize.Tiny, afterText: true).LessPadding().Tiny().NoMinSize()
+                                                         .OnClick((b, e) => { StopEvent(e); OpenOnHackerNews(node); });
+
+            var similarStories = Button("Similar stories").LessPadding().Tiny().NoMinSize()
+                                             .OnClick((b,e) => { StopEvent(e); OpenSimilarStories(node); });
 
             var secondLine = HStack().AlignItemsCenter().Class("no-default-margin").Class("story-status-line").Children(
+                                    NeighborsLinks(node.UID, nodeType:"Domain", edgeType: "HasDomain").PR(8),
                                     If(node.GetInt(N.Story.Score) > 1, Button($"{node.GetInt(N.Story.Score):n0} points").PR(8).LessPadding().Tiny().NoMinSize().NoBorder().NoHover()),
-                                    If(!string.IsNullOrEmpty(domain), Button($"({domain})").PR(8).LessPadding().Tiny().NoMinSize().NoBorder().NoHover()),
                                     seeDiscussion,
+                                    similarStories,
                                     openDiscussionOnHN);
 
             Mosaik.API.Aggregated.GetNeighborCount(node.UID, N.Comment.Type, E.HasComment, (c) =>
             {
                 if (c > 0)
                 {
-                    seeDiscussion.SetText("See discussion").SetIcon(LineAwesome.Comments, size: TextSize.Tiny, afterText: true).Show();
+                    seeDiscussion.SetText("See discussion").Show();
                 }
             });
 
@@ -56,25 +60,56 @@ namespace HackerNews
 
             var card = CardContent(header, secondLine.WS().PL(56));
             
+            
             if (!string.IsNullOrEmpty(url))
             {
-                Action openExternal = () =>
-                {
-                    ElectronBridge.OpenNewWindow(url, true);
-                    LocalStorage.SetBool($"read-{node.UID}", true);
-                    SearchRenderer.MaybeRedraw(node.UID);
-                };
-
                 card.WithExtraCommands(new[] 
                 {
-                    new CommandDefinition("Open Link", "l", LineAwesome.ExternalLinkAlt, openExternal) ,
-                    new CommandDefinition("See Discussion", "d", LineAwesome.Comments, () =>  NodePreview.For(node))
+                    new CommandDefinition("Open Link", "l", UIcons.ArrowUpRightFromSquare, () => OpenLink(node, url)),
+                    new CommandDefinition("Open on HN", "o", UIcons.ArrowUpRightFromSquare, () => OpenOnHackerNews(node)),
+                    new CommandDefinition("Similar Stories", "s", UIcons.MagicWand, () => OpenSimilarStories(node)),
+                    new CommandDefinition("See Discussion", "d", UIcons.Comments, () =>  NodePreview.For(node))
                 });
 
-                header.OnClick = openExternal;
+                header.OnClick = () => OpenLink(node, url);
+            }
+            else
+            {
+                card.WithExtraCommands(new[]
+                {
+                    new CommandDefinition("Open on HN", "o", UIcons.ArrowUpRightFromSquare, () => OpenOnHackerNews(node)),
+                    new CommandDefinition("Similar Stories", "s", UIcons.MagicWand, () => OpenSimilarStories(node)),
+                    new CommandDefinition("See Discussion", "d", UIcons.Comments, () =>  NodePreview.For(node))
+                });
             }
 
             return card;
+        }
+
+        private static void OpenLink(Node node, string url)
+        {
+            ElectronBridge.OpenNewWindow(url, true);
+            LocalStorage.SetBool($"read-{node.UID}", true);
+            SearchRenderer.MaybeRedraw(node.UID);
+        }
+
+        private static void OpenOnHackerNews(Node node)
+        {
+            ElectronBridge.OpenNewWindow($"https://news.ycombinator.com/item?id={node.GetString(N.Story.Id)}", true);
+        }
+
+        private static void OpenSimilarStories(Node node)
+        {
+            var md = Modal().W(80.vw()).H(80.vh()).LightDismiss().ShowCloseButton().SetHeader(TextBlock($"Similar stories to '{node.GetString("Title")}'").SemiBold());
+            md.Content(GetSimilarStories(node, md));
+            md.Show();
+        }
+
+        private static SearchArea GetSimilarStories(Node node, Modal md = null)
+        {
+            return SearchArea().WithFacets().SearchBox(sb => { if (md is object) { sb.LinkedToModal(md); } })
+                                               .OnSearch(sr => sr.SetBeforeTypesFacet(node.Type).WithExcludeUIDs(new[] { node.UID })
+                                                                 .WithSimilarityRanking(new SimilarityRanking().WithIndex(new UID64("9RbCqN1agBA")).WithSimilarTo(new[] { node.UID }))).S();
         }
 
         public string GetColor(Node node) => Color;
@@ -95,11 +130,16 @@ namespace HackerNews
 
         public async Task<CardContent> PreviewAsync(Node node, Parameters state)
         {
-            return CardContent(Header(this, node), CreateView(node, state)).PreviewWidth(80.vw()).PreviewHeight(80.vh());
+            return CardContent(Header(this, node), CreateView(node, state)).PreviewWidth(80.vw()).PreviewHeight(80.vh())
+                .WithExtraCommands(new[]
+            {
+                new CommandDefinition("Open on HN", "o", UIcons.ArrowUpRightFromSquare, () => OpenOnHackerNews(node)).ShowAlsoOnViewAndPreview(),
+            });
         }
 
         public async Task<IComponent> ViewAsync(Node node, Parameters state)
         {
+            Router.Replace(Routes.StoryId(node.GetString("Id")));
             return (await PreviewAsync(node, state)).Merge();
         }
 
@@ -108,9 +148,16 @@ namespace HackerNews
             LocalStorage.SetBool($"read-{node.UID}", true);
             SearchRenderer.MaybeRedraw(node.UID);
 
+            return Pivot().Pivot("story", PivotTitle("Story"), () => GetStoryView(node, state))
+                          .Pivot("similar", PivotTitle("Similar Stories"), () => GetSimilarStories(node))
+                          .S();
+        }
+
+        private IComponent GetStoryView(Node node, Parameters state)
+        {
             var author = Button().Foreground(Theme.Secondary.Foreground).NoPadding().NoMinSize();
-            var text   = node.GetString(N.Story.Text);
-            var url    = node.GetString(N.Story.Url);
+            var text = node.GetString(N.Story.Text);
+            var url = node.GetString(N.Story.Url);
 
             RegExp highlighter = null;
             if (state is object && state.TryGetValue(SearchRenderer.HighlighterKey, out var highlighterSource))
@@ -128,9 +175,9 @@ namespace HackerNews
             return SearchRenderer.HighlightComponent(VStack().S().Children(
                     VStack().S().ScrollY().Class("no-default-margin").PL(8).Children(
                             If(!string.IsNullOrEmpty(text), TextBlock(text, selectable: true, treatAsHTML: true).WS().BreakSpaces()),
-                            HStack().WS().AlignItemsCenter().Children(TextBlock("Posted by"), author.PL(8), 
+                            HStack().WS().AlignItemsCenter().Children(TextBlock("Posted by"), author.PL(8),
                                                                       TextBlock(node.Timestamp.Humanize()).PL(8),
-                                                                      If(!string.IsNullOrEmpty(url), Link(url, Button("Open link").NoPadding().NoMinSize().SetIcon(LineAwesome.ExternalLinkAlt, afterText: true), noUnderline: true).OpenInNewTab())
+                                                                      If(!string.IsNullOrEmpty(url), Link(url, Button("Open link").NoPadding().NoMinSize().SetIcon(UIcons.ArrowUpRightFromSquare, afterText: true), noUnderline: true).OpenInNewTab())
                                                                       ),
                             LazyLoadComments(node.UID, highlighter).WS())
                     ), highlighter);

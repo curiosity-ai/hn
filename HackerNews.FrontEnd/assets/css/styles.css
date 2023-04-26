@@ -2,10 +2,6 @@
     margin: 0px;
 }
 
-#sidebar-home {
-    display: none !important;
-}
-
 .story-status-line {
     transform:translate(-8px, -8px);
 }
@@ -18,4 +14,12 @@
 
 .trends-word-box {
     border-radius: 4px;
+}
+
+.custom-facet-range {
+    opacity: 0;
+}
+
+.facets-button:hover .custom-facet-range {
+    opacity: 1;
 }

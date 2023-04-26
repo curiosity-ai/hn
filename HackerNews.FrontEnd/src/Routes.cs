@@ -1,5 +1,6 @@
 ﻿using Mosaik.Components;
 using Mosaik.Schema;
+using System.Linq;
 using Tesserae;
 
 namespace HackerNews
@@ -15,5 +16,11 @@ namespace HackerNews
         public const string Hiring      = "#/hiring";
         public const string Authors     = "#/authors";
         public const string Trends      = "#/trends";
+        public const string Story       = "#/story";
+        public const string Author      = "#/author";
+
+        public static string AuthorId(string id) => $"{Author}?id={id}";
+        public static string StoryId(string id) => $"{Story}?id={id}";
+        public static string TrendsFor(string[][] words) => Trends + "?terms=" + string.Join(";", words.Select(v => string.Join("+", v)));
     }
 }
