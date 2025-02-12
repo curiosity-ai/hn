@@ -18,7 +18,7 @@ namespace HackerNews
         public string DisplayName => "Property";
         public string LabelField  => "Name";
         public string Color       => "#106ebe";
-        public string Icon        => "circle";
+        public UIcons Icon        => UIcons.Circle;
 
         public CardContent CompactView(Node node)
         {

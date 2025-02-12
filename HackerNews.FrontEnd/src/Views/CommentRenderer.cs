@@ -18,7 +18,7 @@ namespace HackerNews
         public string DisplayName => "Comment";
         public string LabelField  => "Text";
         public string Color       => "#106ebe";
-        public string Icon        => "comment";
+        public UIcons Icon        => UIcons.Comment;
 
         public CardContent CompactView(Node node)
         {

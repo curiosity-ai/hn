@@ -18,7 +18,7 @@ namespace HackerNews
         public string DisplayName => "Job";
         public string LabelField  => "Id";
         public string Color       => "#106ebe";
-        public string Icon        => "briefcase";
+        public UIcons Icon        => UIcons.Briefcase;
 
         public CardContent CompactView(Node node)
         {

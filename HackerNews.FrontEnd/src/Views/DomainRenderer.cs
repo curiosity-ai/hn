@@ -14,7 +14,7 @@ namespace HackerNews
         public string DisplayName => "Domain";
         public string LabelField => "Host";
         public string Color => "#0e00fb";
-        public string Icon => "link";
+        public UIcons Icon => UIcons.Link;
 
         public CardContent CompactView(Node node)
         {

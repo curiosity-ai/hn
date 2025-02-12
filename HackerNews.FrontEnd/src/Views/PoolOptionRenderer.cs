@@ -18,7 +18,7 @@ namespace HackerNews
         public string DisplayName => "PoolOption";
         public string LabelField  => "Id";
         public string Color       => "#106ebe";
-        public string Icon        => "square-check";
+        public UIcons Icon        => UIcons.Checkbox;
 
         public CardContent CompactView(Node node)
         {

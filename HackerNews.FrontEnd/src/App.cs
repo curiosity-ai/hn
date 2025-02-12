@@ -146,17 +146,19 @@ namespace HackerNews
         }
 
 
-        private static void AddCustomSpaces(Sidebar sidebar, App.Sidebar.RefreshTracker refreshTracker)
+        private static void AddCustomSpaces(Sidebar sidebar, App.Sidebar.Mode mode, App.Sidebar.RefreshTracker refreshTracker)
         {
-            var topStoriesBtn  = new SidebarButton("ec ec-fire",                        "Top Stories").OnClick(() =>  Router.Navigate(Routes.TopStories));
-            var newStoriesBtn  = new SidebarButton("ec ec-rocket",                      "New Stories").OnClick(() =>  Router.Navigate(Routes.NewStories));
-            var bestStoriesBtn = new SidebarButton("ec ec-trophy",                      "Best Stories").OnClick(() => Router.Navigate(Routes.BestStories));
-            var showHNBtn      = new SidebarButton("ec ec-eyes",                        "Show HN").OnClick(() =>      Router.Navigate(Routes.ShowHN));
-            var askHNBtn       = new SidebarButton("ec ec-raised-eyebrow",              "Ask HN").OnClick(() =>       Router.Navigate(Routes.AskHN));
-            var hiringBtn      = new SidebarButton("ec ec-construction-worker-man",     "Hiring").OnClick(() =>       Router.Navigate(Routes.Hiring));
-            var allStoriesBtn  = new SidebarButton("ec ec-dizzy",                       "All Stories").OnClick(() =>  Router.Navigate(Routes.AllStories));
-            var trendsBtn      = new SidebarButton("ec ec ec-chart-with-upwards-trend", "Trends").OnClick(() =>       Router.Navigate(Routes.Trends));
-            var authorsBtn     = new SidebarButton("ec ec-writing-hand",                "Authors").OnClick(() =>      Router.Navigate(Routes.Authors));
+            if (mode != App.Sidebar.Mode.Default) return;
+
+            var topStoriesBtn  = new SidebarButton("top-stories",  Emoji.Fire,                        "Top Stories").OnClick(() =>  Router.Navigate(Routes.TopStories));
+            var newStoriesBtn  = new SidebarButton("new-stories",  Emoji.Rocket,                      "New Stories").OnClick(() =>  Router.Navigate(Routes.NewStories));
+            var bestStoriesBtn = new SidebarButton("best-stories", Emoji.Trophy,                      "Best Stories").OnClick(() => Router.Navigate(Routes.BestStories));
+            var showHNBtn      = new SidebarButton("show-hn",      Emoji.Eyes,                        "Show HN").OnClick(() =>      Router.Navigate(Routes.ShowHN));
+            var askHNBtn       = new SidebarButton("ask-hn",       Emoji.RaisedEyebrow,               "Ask HN").OnClick(() =>       Router.Navigate(Routes.AskHN));
+            var hiringBtn      = new SidebarButton("hiring",       Emoji.ConstructionWorkerMan,       "Hiring").OnClick(() =>       Router.Navigate(Routes.Hiring));
+            var allStoriesBtn  = new SidebarButton("all-stories",  Emoji.Dizzy,                       "All Stories").OnClick(() =>  Router.Navigate(Routes.AllStories));
+            var trendsBtn      = new SidebarButton("trends",       Emoji.ChartWithUpwardsTrend,       "Trends").OnClick(() =>       Router.Navigate(Routes.Trends));
+            var authorsBtn     = new SidebarButton("authors",      Emoji.WritingHand,                 "Authors").OnClick(() =>      Router.Navigate(Routes.Authors));
 
             sidebar.AddContent(topStoriesBtn);
             sidebar.AddContent(bestStoriesBtn);

@@ -20,7 +20,7 @@ namespace HackerNews
         public string DisplayName => "Author";
         public string LabelField => "Name";
         public string Color => "#106ebe";
-        public string Icon => "user";
+        public UIcons Icon => UIcons.User;
 
         public CardContent CompactView(Node node)
         {

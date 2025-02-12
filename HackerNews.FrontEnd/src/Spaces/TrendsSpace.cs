@@ -96,7 +96,7 @@ namespace HackerNews
                     }
                 };
 
-                groupStack.Add(Icon("fa fa-square", size: TextSize.Medium, color: GetColor(group.Key)).PL(8).PR(6));
+                groupStack.Add(Icon(UIcons.Square, size: TextSize.Medium, color: GetColor(group.Key)).PL(8).PR(6));
 
                 foreach (var word in group.Value)
                 {

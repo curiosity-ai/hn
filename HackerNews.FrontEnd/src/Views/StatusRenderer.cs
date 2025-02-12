@@ -18,7 +18,7 @@ namespace HackerNews
         public string DisplayName => "Status";
         public string LabelField  => "Name";
         public string Color       => "#106ebe";
-        public string Icon        => "tag";
+        public UIcons Icon        => UIcons.UserTag;
 
         public CardContent CompactView(Node node)
         {

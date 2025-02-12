@@ -18,7 +18,7 @@ namespace HackerNews
         public string DisplayName => "Pool";
         public string LabelField  => "Id";
         public string Color       => "#106ebe";
-        public string Icon        => "ballot-check";
+        public UIcons Icon        => UIcons.BallotCheck;
 
         public CardContent CompactView(Node node)
         {

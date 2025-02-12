@@ -26,7 +26,7 @@ namespace HackerNews
         public string DisplayName => "Story";
         public string LabelField  => "Title";
         public string Color       => "#f35a29";
-        public string Icon        => "notes";
+        public UIcons Icon        => UIcons.Notes;
 
         public CardContent CompactView(Node node)
         {
@@ -116,14 +116,14 @@ namespace HackerNews
 
         public string GetDisplayName(Node node) => DisplayName;
 
-        public string GetIcon(Node node)
+        public UIcons GetIcon(Node node)
         {
             if (LocalStorage.GetBool($"read-{node.UID}"))
             {
-                return "envelope-open";
+                return UIcons.EnvelopeOpen;
             }
 
-            return "envelope";
+            return UIcons.Envelope;
         }
 
         public string GetLabel(Node node) => node.GetString("Title");
